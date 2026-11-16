@@ -1,0 +1,39 @@
+# Keil MDK build output
+MDK-ARM/**/Objects/
+MDK-ARM/**/Listings/
+MDK-ARM/**/DebugConfig/
+MDK-ARM/**/*.uvguix.*
+MDK-ARM/**/*.uvoptx
+
+*.o
+*.d
+*.crf
+*.axf
+*.elf
+*.hex
+*.bin
+*.map
+*.lst
+*.dep
+*.lnp
+*.htm
+*.su
+*.iex
+*.sct
+
+# Build and IDE caches
+build/
+cmake-build-*/
+.vscode/
+.idea/
+.cache/
+compile_commands.json
+
+# OS and editor temporary files
+.DS_Store
+Thumbs.db
+*.bak
+*.tmp
+*.log
+JLinkLog.txt
+JLinkSettings.ini
