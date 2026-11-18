@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "i2c.h"
+#include "tim.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -103,7 +104,23 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static void Servo_SetAngle(int32_t angle)
+{
+  uint32_t ccr;
 
+  if (angle < -90)
+  {
+    angle = -90;
+  }
+  else if (angle > 90)
+  {
+    angle = 90;
+  }
+
+  ccr = (uint32_t)(1500 + (angle * 1000) / 90);
+
+  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, ccr);
+}
 /* USER CODE END 0 */
 
 /**
@@ -135,7 +152,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_I2C1_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+	Servo_SetAngle(0);
 	if (OLED_Init(&g_oled, &hi2c1) != 0U)
 {
   OLED_Clear(&g_oled);
@@ -157,17 +177,20 @@ int main(void)
   char title_text[16];
 
   /* PA2 清零 */
-  if (button_clear_flag != 0U)
-  {
-    button_clear_flag = 0U;
+	if (button_clear_flag != 0U)
+	{
+		button_clear_flag = 0U;
 
-    encoder_count = 0;
-    encoder_last_detent = 0;
-    display_count = 0;
-    display_dirty = 1U;
-  }
+		encoder_count = 0;
+		encoder_last_detent = 0;
+		display_count = 0;
 
-  /* PA1 切换倍率：1 -> 2 -> 4 -> 1 */
+		Servo_SetAngle(0);
+
+		display_dirty = 1U;
+	}
+
+  /* PA1 切换倍率�?1 -> 2 -> 4 -> 1 */
   if (scale_button_flag != 0U)
   {
     uint32_t now = HAL_GetTick();
@@ -209,31 +232,47 @@ int main(void)
     if (detent_delta != 0)
     {
       display_count += detent_delta * encoder_scale;
+			if (display_count > 90)
+			{
+				display_count = 90;
+			}
+			else if (display_count < -90)
+			{
+				display_count = -90;
+			}
+	
       encoder_last_detent = detent_count;
+			
       display_dirty = 1U;
     }
   }
 
-  /* 只有状态变化时才刷新 OLED */
+  /* 只有状�?�变化时才刷�? OLED */
   if (display_dirty != 0U)
   {
     display_dirty = 0U;
 
-    snprintf(count_text,
-             sizeof(count_text),
-             "%ld",
-             (long)display_count);
+     Servo_SetAngle(display_count);
 
-    snprintf(title_text,
-             sizeof(title_text),
-             "COUNT x%u",
-             (unsigned)encoder_scale);
+  snprintf(count_text,
+           sizeof(count_text),
+           "%ld du",
+           (long)display_count);
 
-    OLED_ShowTwoLines(&g_oled, title_text, count_text);
+	snprintf(title_text,
+         sizeof(title_text),
+         "ANGLE x%u",
+         (unsigned)encoder_scale);
+
+  OLED_ShowTwoLines(&g_oled, title_text, count_text);
+}
+}
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
   }
-}
   /* USER CODE END 3 */
-}
+
 
 /**
   * @brief System Clock Configuration
